@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch It</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:#e5e7eb;
+  margin:0;
+  text-align:center;
+}
+
+/* 🔥 PREMIUM LOGIN */
+.login-card{
+  background:white;
+  margin:50px 20px;
+  padding:25px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.15);
+}
+
+.login-card h2{
+  margin:10px 0;
+}
+
+.sub{
+  color:gray;
+  font-size:14px;
+}
+
+.logo{
+  width:90px;
+  margin-bottom:10px;
+}
+
+.login-card input{
+  width:90%;
+  padding:12px;
+  margin:10px 0;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+.login-card button{
+  width:95%;
+  padding:14px;
+  background:#2563eb;
+  color:white;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+}
+
+/* BOX */
+.box{
+  background:white;
+  margin:20px;
+  padding:20px;
+  border-radius:15px;
+}
+
+/* INPUT */
+input,textarea,select{
+  width:90%;
+  padding:10px;
+  margin:8px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+/* BUTTON */
+button{
+  width:95%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+}
+
+.main{background:#2563eb;color:white;}
+.green{background:#10b981;color:white;}
+.yellow{background:#facc15;}
+.gray{background:#e5e7eb;}
+
+.page{display:none}
+
+.card{
+  background:#f3f4f6;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔥 PREMIUM LOGIN -->
+<div class="login-card" id="login">
+
+<img src="logo.png" class="logo">
+
+<h2>Welcome Back</h2>
+<p class="sub">Fast • Safe • Reliable</p>
+
+<input id="name" placeholder="Your Name">
+<input id="phone" placeholder="Phone Number">
+
+<button onclick="login()">Continue</button>
+
+</div>
+
+<!-- HOME -->
+<div class="box page" id="home">
+<button class="main" onclick="showService()">Send / Buy</button>
+<button class="green" onclick="showDriver()">Delivery Partner</button>
+</div>
+
+<!-- SERVICE -->
+<div class="box page" id="service">
+<button onclick="choose('Send Item')">Send Item</button>
+<button onclick="choose('Buy Item')">Buy Item</button>
+</div>
+
+<!-- CUSTOMER -->
+<div class="box page" id="customer">
+
+<h3 id="title"></h3>
+
+<input id="pickup" placeholder="Pickup">
+<button onclick="getLocation()">📍 Use My Location</button>
+
+<input id="drop" placeholder="Drop">
+<textarea id="product" placeholder="Item"></textarea>
+<input id="price" placeholder="Amount">
+
+<select id="payment">
+<option value="">Payment</option>
+<option value="COD">Cash on Delivery</option>
+<option value="UPI">UPI</option>
+</select>
+
+<button class="yellow" onclick="order()">Place Order</button>
+</div>
+
+<!-- DRIVER -->
+<div class="box page" id="driver">
+<h3>💸 Earnings: ₹<span id="earn">0</span></h3>
+<div id="list"></div>
+</div>
+
+<script>
+
+let type="";
+
+// LOGIN
+function login(){
+if(!name.value || !phone.value){
+alert("Enter details"); return;
+}
+login.style.display="none";
+home.style.display="block";
+}
+
+// NAV
+function showService(){
+home.style.display="none";
+service.style.display="block";
+}
+
+function showDriver(){
+home.style.display="none";
+driver.style.display="block";
+load();
+showEarn();
+}
+
+// SELECT
+function choose(t){
+type=t;
+service.style.display="none";
+customer.style.display="block";
+title.innerText=t;
+}
+
+// LOCATION
+function getLocation(){
+navigator.geolocation.getCurrentPosition(pos=>{
+pickup.value="https://maps.google.com/?q="+pos.coords.latitude+","+pos.coords.longitude;
+});
+}
+
+// ORDER
+function order(){
+let pay=payment.value;
+
+if(!pay){
+alert("Select payment"); return;
+}
+
+let data={
+type:type,
+pickup:pickup.value,
+drop:drop.value,
+product:product.value,
+price:price.value,
+payment:pay,
+status:"Pending"
+};
+
+let arr=JSON.parse(localStorage.getItem("orders"))||[];
+arr.push(data);
+localStorage.setItem("orders",JSON.stringify(arr));
+
+if(pay=="UPI"){
+window.open("https://upi.google.com");
+}
+
+alert("Order placed 🔥");
+}
+
+// DRIVER
+function load(){
+let arr=JSON.parse(localStorage.getItem("orders"))||[];
+list.innerHTML="";
+
+arr.forEach((o,i)=>{
+
+let extra="";
+
+if(o.status=="Pending"){
+extra=`<button onclick="accept(${i})">Accept</button>
+<button onclick="reject(${i})">Reject</button>`;
+}
+
+if(o.status=="Accepted"){
+extra=`<button onclick="complete(${i})">Delivered</button>`;
+}
+
+let d=document.createElement("div");
+d.className="card";
+
+d.innerHTML=`
+${o.type}<br>
+${o.pickup} → ${o.drop}<br>
+${o.product}<br>
+₹${o.price}<br>
+${o.payment}<br>
+${o.status}<br>
+${extra}
+`;
+
+list.appendChild(d);
+});
+}
+
+function accept(i){
+let arr=JSON.parse(localStorage.getItem("orders"));
+arr[i].status="Accepted";
+localStorage.setItem("orders",JSON.stringify(arr));
+load();
+}
+
+function reject(i){
+let arr=JSON.parse(localStorage.getItem("orders"));
+arr[i].status="Rejected";
+localStorage.setItem("orders",JSON.stringify(arr));
+load();
+}
+
+function complete(i){
+let arr=JSON.parse(localStorage.getItem("orders"));
+arr[i].status="Delivered";
+localStorage.setItem("orders",JSON.stringify(arr));
+
+let earn=Number(localStorage.getItem("earn"))||0;
+earn+=20;
+localStorage.setItem("earn",earn);
+
+load();
+showEarn();
+}
+
+// EARN
+function showEarn(){
+document.getElementById("earn").innerText=localStorage.getItem("earn")||0;
+}
+
+</script>
+
+</body>
+</html>
