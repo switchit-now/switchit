@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SwitchIt 🚚</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .box {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      width: 320px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-bottom: 5px;
+    }
+
+    p {
+      color: gray;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #25D366;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1ebc59;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>SwitchIt 🚚</h2>
+  <p>Fast • Safe • Reliable</p>
+
+  <input type="text" id="name" placeholder="Your Name">
+  <input type="text" id="phone" placeholder="Phone Number">
+  <input type="text" id="pickup" placeholder="Pickup Location">
+  <input type="text" id="drop" placeholder="Drop Location">
+
+  <button onclick="sendWhatsApp()">Book Now</button>
+</div>
+
+<script>
+function sendWhatsApp() {
+  let name = document.getElementById("name").value.trim();
+  let phone = document.getElementById("phone").value.trim();
+  let pickup = document.getElementById("pickup").value.trim();
+  let drop = document.getElementById("drop").value.trim();
+
+  if(name === "" || phone === "" || pickup === "" || drop === "") {
+    alert("Please fill all details");
+    return;
+  }
+
+  let message = "🚚 New Order:%0A"
+    + "Name: " + name + "%0A"
+    + "Phone: " + phone + "%0A"
+    + "Pickup: " + pickup + "%0A"
+    + "Drop: " + drop;
+
+  let whatsappURL = "https://wa.me/919943594647?text=" + message;
+
+  window.open(whatsappURL, "_blank");
+}
+</script>
+
+</body>
+</html>
