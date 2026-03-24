@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwitchIt</title>
+
+<style>
+body{font-family:Arial;background:#f2f2f2;margin:0;text-align:center;}
+.box{background:white;margin:20px;padding:20px;border-radius:15px;}
+input,textarea,select,button{
+width:90%;padding:12px;margin:10px;border-radius:10px;border:1px solid #ccc;
+}
+button{background:#0a66c2;color:white;}
+.hidden{display:none;}
+.card{border:1px solid #ccc;margin:10px;padding:10px;border-radius:10px;}
+img.preview{width:100px;margin-top:10px;border-radius:10px;}
+.logo{width:150px;}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+<img src="logo.png" class="logo">
+<h2>SwitchIt</h2>
+
+<input id="name" placeholder="Name">
+<input id="phone" placeholder="Phone">
+
+<select id="role">
+<option value="">Select Role</option>
+<option value="order">Order</option>
+<option value="delivery">Delivery Partner</option>
+</select>
+
+<button onclick="goNext()">Continue</button>
+</div>
+
+<!-- ORDER -->
+<div class="box hidden" id="orderPage">
+<h2>Place Order</h2>
+
+<input id="custName" placeholder="Name">
+<input id="custPhone" placeholder="Phone">
+<input id="pickup" placeholder="Pickup">
+<input id="drop" placeholder="Drop">
+
+<textarea id="details" placeholder="Order details"></textarea>
+
+<input type="file" id="image" accept="image/*" onchange="previewImage()">
+<img id="preview" class="preview" style="display:none;">
+
+<button onclick="getLocation()">📍 Location</button>
+<button onclick="sendOrder()">🚀 Send Order</button>
+</div>
+
+<!-- DELIVERY LOGIN -->
+<div class="box hidden" id="deliveryLogin">
+<h2>Delivery Partner</h2>
+
+<input id="dname" placeholder="Name">
+<input id="dphone" placeholder="Phone">
+<input id="vehicle" placeholder="Vehicle">
+
+<button onclick="enterDelivery()">Enter</button>
+</div>
+
+<!-- DELIVERY PANEL -->
+<div class="box hidden" id="deliveryPanel">
+<h2>Orders</h2>
+<div id="ordersList"></div>
+</div>
+
+<script>
+
+let liveLocationLink="";
+let imageData="";
+
+// LOGIN FIXED
+function goNext(){
+
+let n=document.getElementById("name").value.trim();
+let p=document.getElementById("phone").value.trim();
+let r=document.getElementById("role").value;
+
+if(n==""||p==""||r==""){
+alert("Fill all details 😅"); return;
+}
+
+document.getElementById("loginBox").style.display="none";
+
+if(r==="order"){
+document.getElementById("orderPage").classList.remove("hidden");
+}else{
+document.getElementById("deliveryLogin").classList.remove("hidden");
+}
+}
+
+// IMAGE
+function previewImage(){
+let file=document.getElementById("image").files[0];
+let reader=new FileReader();
+
+reader.onload=function(){
+imageData=reader.result;
+document.getElementById("preview").src=imageData;
+document.getElementById("preview").style.display="block";
+}
+
+if(file) reader.readAsDataURL(file);
+}
+
+// LOCATION
+function getLocation(){
+navigator.geolocation.getCurrentPosition(
+(pos)=>{
+liveLocationLink=`https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
+alert("Location captured 📍");
+},
+()=>{
+window.open("https://maps.google.com");
+}
+);
+}
+
+// SEND ORDER FIXED
+function sendOrder(){
+
+let name=document.getElementById("custName").value;
+let phone=document.getElementById("custPhone").value;
+let pickup=document.getElementById("pickup").value;
+let drop=document.getElementById("drop").value;
+
+if(name==""||phone==""||pickup==""||drop==""){
+alert("Fill all details"); return;
+}
+
+let order={
+name:name,
+phone:phone,
+pickup:pickup,
+drop:drop,
+details:document.getElementById("details").value,
+image:imageData,
+location:liveLocationLink,
+status:"Pending"
+};
+
+let arr=JSON.parse(localStorage.getItem("orders"))||[];
+arr.push(order);
+localStorage.setItem("orders",JSON.stringify(arr));
+
+// WhatsApp
+let msg=`🚚 Order:
+Name:${name}
+Phone:${phone}
+Pickup:${pickup}
+Drop:${drop}
+Details:${order.details}
+Location:${liveLocationLink}`;
+
+window.open("https://wa.me/919943594647?text="+encodeURIComponent(msg));
+
+alert("Order placed 🔥");
+}
+
+// DELIVERY LOGIN
+function enterDelivery(){
+
+let name=document.getElementById("dname").value;
+let phone=document.getElementById("dphone").value;
+let vehicle=document.getElementById("vehicle").value;
+
+if(name==""||phone==""||vehicle==""){
+alert("Fill all"); return;
+}
+
+localStorage.setItem("delivery",JSON.stringify({name,phone,vehicle}));
+
+document.getElementById("deliveryLogin").classList.add("hidden");
+document.getElementById("deliveryPanel").classList.remove("hidden");
+
+loadOrders();
+}
+
+// LOAD ORDERS
+function loadOrders(){
+
+let arr=JSON.parse(localStorage.getItem("orders"))||[];
+let html="";
+
+arr.forEach((o,i)=>{
+
+html+=`
+<div class="card">
+👤 ${o.name}<br>
+📞 ${o.phone}<br>
+📍 ${o.pickup} → ${o.drop}<br>
+📝 ${o.details}<br>
+${o.image ? `<img src="${o.image}" class="preview">` : ""}<br>
+Status: ${o.status}<br><br>
+
+<button onclick="acceptOrder(${i})">Accept</button>
+<button onclick="rejectOrder(${i})">Reject</button>
+</div>
+`;
+
+});
+
+document.getElementById("ordersList").innerHTML=html;
+}
+
+// ACCEPT
+function acceptOrder(i){
+
+let arr=JSON.parse(localStorage.getItem("orders"));
+let del=JSON.parse(localStorage.getItem("delivery"));
+
+arr[i].status="Accepted";
+localStorage.setItem("orders",JSON.stringify(arr));
+
+// customer
+let msg1=`🚚 Order Accepted
+Driver:${del.name}
+Phone:${del.phone}
+Vehicle:${del.vehicle}`;
+
+window.open("https://wa.me/91"+arr[i].phone+"?text="+encodeURIComponent(msg1));
+
+// delivery
+let msg2=`📦 Order Details
+Customer:${arr[i].name}
+Pickup:${arr[i].pickup}
+Drop:${arr[i].drop}`;
+
+window.open("https://wa.me/91"+del.phone+"?text="+encodeURIComponent(msg2));
+
+loadOrders();
+}
+
+// REJECT
+function rejectOrder(i){
+let arr=JSON.parse(localStorage.getItem("orders"));
+arr[i].status="Rejected";
+localStorage.setItem("orders",JSON.stringify(arr));
+loadOrders();
+}
+
+</script>
+
+</body>
+</html>
