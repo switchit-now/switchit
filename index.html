@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwitchIt</title>
+
+<style>
+body{
+  font-family: Arial;
+  background:#f2f2f2;
+  margin:0;
+  text-align:center;
+}
+.container{
+  background:white;
+  margin:20px;
+  padding:20px;
+  border-radius:15px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+input,select,button{
+  width:90%;
+  padding:12px;
+  margin:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+button{
+  background:#0a66c2;
+  color:white;
+  font-weight:bold;
+}
+.hidden{display:none;}
+.logo{
+  width:180px;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="container" id="login">
+<img src="logo.png" class="logo">
+<h2>Welcome Back</h2>
+
+<input type="text" id="name" placeholder="Enter Name">
+<input type="number" id="phone" placeholder="Phone Number">
+
+<select id="role">
+<option value="">Select Role</option>
+<option value="order">Order</option>
+<option value="delivery">Delivery Partner</option>
+</select>
+
+<button onclick="login()">Continue</button>
+</div>
+
+<!-- ORDER PAGE -->
+<div class="container hidden" id="orderPage">
+<h2>Place Order</h2>
+
+<input type="text" id="custName" placeholder="Name">
+<input type="number" id="custPhone" placeholder="Phone Number">
+<input type="text" id="pickup" placeholder="Pickup Location">
+<input type="text" id="drop" placeholder="Delivery Location">
+
+<button onclick="getLocation()">📍 Share Live Location</button>
+<button onclick="sendOrder()">🚀 Send Order</button>
+</div>
+
+<!-- DELIVERY PAGE -->
+<div class="container hidden" id="deliveryPage">
+<h2>Delivery Partner Panel</h2>
+
+<p id="orderDetails">Waiting for order...</p>
+
+<input type="text" placeholder="Aadhar Number">
+<input type="file">
+<input type="file">
+
+<button onclick="openMap()">🗺️ Open Route</button>
+</div>
+
+<script>
+
+let userData={};
+let liveLocationLink="";
+
+// LOGIN
+function login(){
+let name=document.getElementById("name").value;
+let phone=document.getElementById("phone").value;
+let role=document.getElementById("role").value;
+
+if(name==""||phone==""||role==""){
+alert("Fill all details");
+return;
+}
+
+userData={name,phone,role};
+
+document.getElementById("login").classList.add("hidden");
+
+if(role=="order"){
+document.getElementById("orderPage").classList.remove("hidden");
+}else{
+document.getElementById("deliveryPage").classList.remove("hidden");
+loadOrder();
+}
+}
+
+// LOCATION
+function getLocation(){
+if(navigator.geolocation){
+navigator.geolocation.getCurrentPosition(function(pos){
+let lat=pos.coords.latitude;
+let lon=pos.coords.longitude;
+
+liveLocationLink=`https://www.google.com/maps?q=${lat},${lon}`;
+
+alert("Location captured 📍");
+});
+}else{
+alert("Location not supported");
+}
+}
+
+// SEND ORDER
+function sendOrder(){
+let name=document.getElementById("custName").value;
+let phone=document.getElementById("custPhone").value;
+let pickup=document.getElementById("pickup").value;
+let drop=document.getElementById("drop").value;
+
+if(name==""||phone==""||pickup==""||drop==""){
+alert("Fill all details");
+return;
+}
+
+let orderData={name,phone,pickup,drop,location:liveLocationLink};
+
+localStorage.setItem("order",JSON.stringify(orderData));
+
+let msg=`🚀 New Order:%0A
+Name: ${name}%0A
+Phone: ${phone}%0A
+Pickup: ${pickup}%0A
+Drop: ${drop}%0A
+Location: ${liveLocationLink}`;
+
+window.open(`https://wa.me/919943594647?text=${msg}`);
+
+alert("Order sent successfully 🔥");
+}
+
+// LOAD ORDER
+function loadOrder(){
+let data=localStorage.getItem("order");
+
+if(data){
+let d=JSON.parse(data);
+
+document.getElementById("orderDetails").innerText=
+`👤 ${d.name}
+📞 ${d.phone}
+📍 ${d.pickup}
+🏁 ${d.drop}
+🌍 ${d.location}`;
+}
+}
+
+// MAP
+function openMap(){
+let data=JSON.parse(localStorage.getItem("order"));
+
+if(!data){
+alert("No order");
+return;
+}
+
+let url=`https://www.google.com/maps/dir/${data.pickup}/${data.drop}`;
+window.open(url);
+}
+
+</script>
+
+</body>
+</html>
